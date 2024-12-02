@@ -16,7 +16,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # 存储根目录的全局变量
 ROOT_DIR = None
@@ -222,5 +222,6 @@ if __name__ == '__main__':
     print(f"File Server started at http://127.0.0.1:5000")
     print(f"Serving files from: {ROOT_DIR}")
     
-    # 启动服务器
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    # 使用 waitress 作为生产级服务器
+    from waitress import serve
+    serve(app, host='127.0.0.1', port=5000)

@@ -6,8 +6,11 @@ a = Analysis(
     ['file_server.py'],
     pathex=[],
     binaries=[],
-    datas=[('templates', 'templates')],
-    hiddenimports=['flask', 'jinja2', 'werkzeug'],
+    datas=[
+        ('templates', 'templates'),
+        ('static', 'static')
+    ],
+    hiddenimports=['flask', 'jinja2', 'werkzeug', 'waitress'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -27,7 +30,7 @@ exe = EXE(
     a.datas,
     [],
     name='FileServer',
-    debug=True,
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,

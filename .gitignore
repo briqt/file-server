@@ -1,3 +1,5 @@
-/.idea/
-/dist/
 /build/
+/dist/
+/.idea/
+/venv/
+/venv-build/

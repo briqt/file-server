@@ -6,8 +6,8 @@ if not exist "venv" (
     echo Creating virtual environment...
     python -m venv venv
     call venv\Scripts\activate
-    echo Installing dependencies...
-    pip install flask
+    echo Installing development dependencies...
+    pip install -r requirements-dev.txt
 ) else (
     call venv\Scripts\activate
 )
