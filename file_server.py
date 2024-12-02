@@ -130,7 +130,7 @@ def get_breadcrumbs(target_path, base_dir):
             current = str(Path(current).joinpath(part))
             breadcrumbs.append({
                 'name': part,
-                'path': normalize_path(current)
+                'path': '/' + normalize_path(current)  # 添加前导斜杠，确保是绝对路径
             })
     
     return [{'name': 'Home', 'path': '/'}] + breadcrumbs
