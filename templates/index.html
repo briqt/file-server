@@ -6,11 +6,12 @@
     <link rel="icon" href="/favicon.ico"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="/static/css/github.min.css">
+    <script src="/static/js/highlight.min.js"></script>
     <script>
         const scripts = [
             "apache.min.js", "asciidoc.min.js", "bash.min.js", "c.min.js", "cmake.min.js", "cpp.min.js",
             "csharp.min.js", "css.min.js", "dart.min.js", "diff.min.js", "dockerfile.min.js", "dos.min.js",
-            "go.min.js", "gradle.min.js", "graphql.min.js", "groovy.min.js", "highlight.min.js", "ini.min.js",
+            "go.min.js", "gradle.min.js", "graphql.min.js", "groovy.min.js", "ini.min.js",
             "java.min.js", "javascript.min.js", "json.min.js", "kotlin.min.js", "latex.min.js", "less.min.js",
             "lua.min.js", "makefile.min.js", "markdown.min.js", "nginx.min.js", "pgsql.min.js", "php.min.js",
             "powershell.min.js", "properties.min.js", "python.min.js", "r.min.js", "ruby.min.js", "rust.min.js",
@@ -18,10 +19,12 @@
             "typescript.min.js", "wasm.min.js", "x86asm.min.js", "xml.min.js", "yaml.min.js"
         ];
     
-        scripts.forEach(script => {
-            const scriptElement = document.createElement('script');
-            scriptElement.src = `/static/js/${script}`;
-            document.head.appendChild(scriptElement);
+        window.addEventListener('load', function() {
+            scripts.forEach(script => {
+                const scriptElement = document.createElement('script');
+                scriptElement.src = `/static/js/${script}`;
+                document.head.appendChild(scriptElement);
+            });
         });
     </script>
 

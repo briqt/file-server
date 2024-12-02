@@ -48,8 +48,8 @@ def create_zip_file(directory):
 
 def normalize_path(path):
     """规范化路径，确保使用/作为分隔符且以/开头"""
-    # 将Windows路径分隔符替换为/
-    normalized = path.replace(os.sep, '/')
+    # 使用 pathlib 处理路径，自动处理分隔符
+    normalized = str(Path(path)).replace('\\', '/')
     # 去除开头的斜杠
     normalized = normalized.lstrip('/')
     return normalized
@@ -58,8 +58,8 @@ def get_safe_path(path):
     """获取安全的绝对路径，确保在ROOT_DIR范围内"""
     # 规范化并移除开头的斜杠
     clean_path = normalize_path(path)
-    # 构建绝对路径
-    abs_path = os.path.abspath(os.path.join(ROOT_DIR, clean_path))
+    # 使用 pathlib 构建绝对路径
+    abs_path = str(Path(ROOT_DIR).joinpath(clean_path).resolve())
     # 确保路径在ROOT_DIR内
     if not abs_path.startswith(ROOT_DIR):
         return None
@@ -99,9 +99,13 @@ def get_directory_info(target_path, base_dir):
         # 对文件直接计算大小，目录则显示占位符
         size = stat.st_size if not is_dir else None
         
+        # 修复：使用当前路径和item名称拼接生成正确的href路径
+        current_path = request.path.rstrip('/')
+        href_path = f"{current_path}/{item}" if current_path != '/' else f"/{item}"
+        
         files.append({
             'name': item,
-            'path': normalize_path(rel_item_path),
+            'path': href_path,  # 使用正确的href路径
             'type': 'directory' if is_dir else 'file',
             'size': format_size(size) if size is not None else '----',
             'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
@@ -114,14 +118,16 @@ def get_directory_info(target_path, base_dir):
 
 def get_breadcrumbs(target_path, base_dir):
     """获取面包屑导航信息"""
-    rel_path = os.path.relpath(target_path, base_dir)
+    # 使用 pathlib 处理相对路径
+    rel_path = str(Path(target_path).relative_to(Path(base_dir)))
     breadcrumbs = []
     current = ''
     
     # 如果不是根目录，添加面包屑
     if rel_path != '.':
-        for part in rel_path.split(os.sep):
-            current = os.path.join(current, part)
+        # 使用 / 分割路径，确保跨平台兼容性
+        for part in rel_path.replace('\\', '/').split('/'):
+            current = str(Path(current).joinpath(part))
             breadcrumbs.append({
                 'name': part,
                 'path': normalize_path(current)
