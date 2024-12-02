@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="icon" href="/favicon.ico"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- 常用语言包 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/markdown.min.js"></script>
+
+    <title>FileServer</title>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --hover-bg: rgba(0, 120, 212, 0.1);
+            --hover-color: #0078d4;
+            --icon-color: #666;
+            --loading-color: #ddd;
+            --padding: 12px 16px;
+        }
+
+        body {
+            margin: 0;
+            padding-top: 20px;
+            padding-left: 5%;
+            padding-right: 5%;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        main {
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 375px;
+            font-size: 16px;
+            color: var(--text-color);
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease-in-out;
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        th,
+        td {
+            line-height: 30px;
+            height: 30px;
+            padding: var(--padding);
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100%;
+            opacity: 1;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .hide {
+            width: 0px;
+            opacity: 0;
+            padding: 0;
+        }
+
+        .name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .name svg,
+        .operate_text svg {
+            margin-right: 5px;
+        }
+
+        .operate_text {
+            padding: 6px 10px;
+            font-size: 0.9em;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .operate_text:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .operate_text + .operate_text {
+            margin-left: 5px;
+        }
+
+        svg {
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.15em;
+            fill: currentColor;
+            transition: all 0.2s ease-in-out;
+        }
+
+        a {
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease-in-out;
+        }
+
+        a:hover {
+            color: var(--primary-color);
+        }
+
+        #dialog {
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            width: 90vw;
+            height: 90vh;
+            padding: 20px;
+            border: none;
+            overflow: hidden;
+        }
+
+        #dialog:focus-visible {
+            outline: none;
+        }
+
+        #dialog .title {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title b {
+            margin: unset;
+            text-align: center;
+        }
+
+        .title .close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .title .close:hover {
+            color: var(--primary-color);
+            background-color: var(--hover-bg);
+        }
+
+        #dialog .content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        #preview-content {
+            max-width: 100%;
+            max-height: calc(90vh - 80px);
+            overflow: auto;
+            padding: 20px;
+        }
+
+        #preview-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #preview-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 0;
+        }
+
+        #preview-content.image-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+
+        #preview-content.pdf-preview {
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #preview-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            overflow: hidden;
+        }
+
+        #preview-content.video-preview,
+        #preview-content.audio-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #preview-content.video-preview video {
+            max-width: 100%;
+            max-height: calc(90vh - 120px);
+        }
+
+        #preview-content.audio-preview audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        #preview-content.html-preview {
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #preview-content.html-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #preview-content pre {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+        }
+
+        #preview-content pre code {
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .hljs {
+            background: #f6f8fa !important;
+        }
+
+        #preview-content.video-preview,
+        #preview-content.audio-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #preview-content.video-preview video {
+            max-width: 100%;
+            max-height: calc(90vh - 120px);
+        }
+
+        #preview-content.audio-preview audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* 面包屑导航样式 */
+        .breadcrumbs {
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .breadcrumb-item {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .breadcrumb-item svg {
+            width: 18px;
+            height: 18px;
+            vertical-align: -0.15em;
+            fill: currentColor;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 10px;
+        }
+    </style>
+    <script>
+        // 可预览的文件类型配置
+        const PREVIEWABLE_FILES = {
+            // 通过扩展名判断
+            extensions: new Set([
+                // 文本文档
+                'txt', 'log', 'md', 'markdown', 'rst',
+                // Web 开发
+                'js', 'jsx', 'ts', 'tsx', 'html', 'htm', 'css', 'scss', 'sass', 'less',
+                // 后端开发
+                'py', 'java', 'php', 'rb', 'go', 'rs', 'cs', 'scala', 'kt', 'lua',
+                // 系统/底层
+                'c', 'cpp', 'h', 'hpp', 'asm',
+                // Shell/脚本
+                'sh', 'bash', 'zsh', 'fish', 'ps1', 'bat', 'cmd',
+                // 数据库
+                'sql', 'mysql', 'pgsql',
+                // 配置文件
+                'json', 'yaml', 'yml', 'toml', 'ini', 'conf', 'config',
+                'xml', 'plist', 'properties', 'env', 'editorconfig',
+                'dockerfile', 'nginx', 'apache', 'gitignore',
+                // 数据文件
+                'csv', 'tsv', 'jsonl',
+                // 文档
+                'tex', 'latex', 'org', 'wiki', 'adoc', 'asciidoc', 'rtf'
+            ]),
+
+            // 通过 MIME 类型判断
+            mimePatterns: [
+                /^image\//,      // 所有图片
+                /^text\//,       // 所有文本
+                /^video\//,      // 所有视频
+                /^audio\//,      // 所有音频
+                /^application\/(pdf|json|xml|javascript|x-httpd-php|x-sh|x-yaml)$/  // 特定应用类型
+            ]
+        };
+
+        // 判断文件是否可预览
+        function isPreviewable(mimeType, fileName) {
+            // 1. 检查扩展名
+            const ext = fileName.split('.').pop().toLowerCase();
+            if (PREVIEWABLE_FILES.extensions.has(ext)) {
+                return true;
+            }
+
+            // 2. 检查 MIME 类型
+            if (mimeType) {
+                return PREVIEWABLE_FILES.mimePatterns.some(pattern => pattern.test(mimeType));
+            }
+
+            return false;
+        }
+    </script>
+</head>
+
+<body>
+<!-- 面包屑导航 -->
+<div class="breadcrumbs">
+    {% for crumb in breadcrumbs %}
+    <a href="{{ crumb.path }}" class="breadcrumb-item">
+        {% if crumb.name == 'Home' %}
+        <svg class="icon" viewBox="0 0 24 24">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        {% endif %}
+        {{ crumb.name }}
+    </a>
+    {% if not loop.last %}
+    <span class="breadcrumb-separator">/</span>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<main>
+    <table>
+        <thead>
+        <th id="name" class="name">名称</th>
+        <th id="size" class="size">大小</th>
+        <th id="update_time" class="update_time">修改时间</th>
+        <th id="operate" class="operate">操作</th>
+        </thead>
+        <tbody>
+        {% for file in files %}
+        <tr>
+            <td class="name" title="{{ file.name }}">
+                <svg class="icon" viewBox="0 0 24 24">
+                    {% if file.type == 'directory' %}
+                    <path d="M2.5 4.5C2.5 3.67157 3.17157 3 4 3H9.46482L10.9648 5H20C20.8284 5 21.5 5.67157 21.5 6.5V18.5C21.5 19.3284 20.8284 20 20 20H4C3.17157 20 2.5 19.3284 2.5 18.5V4.5ZM4 4.5V18.5H20V6.5H10.3352L8.83518 4.5H4Z"/>
+                    {% else %}
+                    <path d="M6 2C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2H6ZM6 4H13V8H18V20H6V4ZM8 11V12.5H16V11H8ZM8 14.5V16H16V14.5H8Z"/>
+                    {% endif %}
+                </svg>
+                <a class="name_text" href="{{ file.path }}">{{ file.name }}</a>
+            </td>
+            <td class="size" {% if file.type=='directory' %}data-type="directory" data-path="{{ file.path }}" {%
+                endif %}>
+                {% if file.type == 'directory' %}
+                <span class="size-value">{{ file.size }}</span>
+                <span class="size-loading"></span>
+                {% else %}
+                {{ file.size }}
+                {% endif %}
+            </td>
+            <td class="update_time">{{ file.modified }}</td>
+            <td class="operate">
+                <a class="operate_text" title="下载" href="{{ file.path }}?download=true">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                                d="M4.75 17.4167C4.75 17.2236 4.82634 17.0384 4.96262 16.9021C5.09891 16.7658 5.28407 16.6895 5.47722 16.6895H18.5228C18.7159 16.6895 18.9011 16.7658 19.0374 16.9021C19.1737 17.0384 19.25 17.2236 19.25 17.4167V19.2728C19.25 19.4659 19.1737 19.6511 19.0374 19.7874C18.9011 19.9237 18.7159 20 18.5228 20H5.47722C5.28407 20 5.09891 19.9237 4.96262 19.7874C4.82634 19.6511 4.75 19.4659 4.75 19.2728V17.4167ZM12 4C12.1931 4 12.3783 4.07634 12.5146 4.21262C12.6509 4.34891 12.7272 4.53407 12.7272 4.72722V13.9062L15.6903 10.9432C15.8274 10.8061 16.0137 10.7292 16.2081 10.7292C16.4025 10.7292 16.5889 10.8061 16.7259 10.9432C16.863 11.0802 16.9399 11.2666 16.9399 11.461C16.9399 11.6554 16.863 11.8417 16.7259 11.9788L12.5178 16.1869C12.3807 16.324 12.1944 16.4009 12 16.4009C11.8056 16.4009 11.6193 16.324 11.4822 16.1869L7.27406 11.9788C7.13699 11.8417 7.06006 11.6554 7.06006 11.461C7.06006 11.2666 7.13699 11.0802 7.27406 10.9432C7.41113 10.8061 7.59748 10.7292 7.79188 10.7292C7.98627 10.7292 8.17262 10.8061 8.30969 10.9432L11.2728 13.9062V4.72722C11.2728 4.53407 11.3491 4.34891 11.4854 4.21262C11.6217 4.07634 11.8069 4 12 4Z"/>
+                    </svg>
+                    下载
+                </a>
+                {% if file.type != 'directory' %}
+                <script>
+                    if (isPreviewable('{{ file.mime_type }}', '{{ file.name }}')) {
+                        document.write(`
+                                    <a class="operate_text" title="预览" onclick="showPreview('{{ file.path }}', '{{ file.name }}', '{{ file.mime_type }}')">
+                                        <svg class="icon" viewBox="0 0 24 24">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z" />
+                                        </svg>
+                                        预览
+                                    </a>
+                                `);
+                    }
+                </script>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</main>
+
+<dialog id="dialog">
+    <div class="title">
+        <b id="preview-title">预览</b>
+        <div class="close" onclick="dialog.close()">
+            <svg t="1732791885251" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                 xmlns="http://www.w3.org/2000/svg" p-id="2496" width="128" height="128">
+                <path
+                        d="M963.2 60.8c35.2 35.2 35.2 86.4 0 121.6L179.2 963.2c-32 32-86.4 32-118.4 0s-32-86.4 0-118.4L844.8 60.8c32-35.2 86.4-35.2 118.4 0z"
+                        p-id="2497"/>
+                <path
+                        d="M963.2 963.2c-35.2 35.2-86.4 35.2-121.6 0L60.8 179.2c-32-32-32-86.4 0-118.4s86.4-32 118.4 0l784 784c35.2 32 35.2 86.4 0 118.4z"
+                        p-id="2498"/>
+            </svg>
+        </div>
+    </div>
+    <div id="preview-content" class="content">
+        <!-- 预览内容将在这里动态加载 -->
+    </div>
+</dialog>
+
+<script>
+    const dialog = document.getElementById('dialog');
+    const set = new Set([]);
+
+    // 限制并发请求数量
+    const CONCURRENT_LIMIT = 3;
+    const queue = [];
+    let running = 0;
+
+    // 处理队列中的请求
+    function processQueue() {
+        if (running >= CONCURRENT_LIMIT || queue.length === 0) return;
+
+        const cell = queue.shift();
+        if (!cell) return;
+
+        running++;
+        fetchDirectorySize(cell);
+    }
+
+    // 带重试的fetch
+    async function fetchWithRetry(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+            }
+        }
+    }
+
+    // 获取目录大小
+    async function fetchDirectorySize(cell) {
+        if (cell.classList.contains('loaded')) return;
+
+        try {
+            const path = cell.dataset.path;
+            // 移除开头的斜杠，确保路径格式正确
+            const cleanPath = path.replace(/^\/+/, '');
+            const response = await fetchWithRetry(`/_api_/directory-size/${encodeURIComponent(cleanPath)}`);
+
+            if (response && response.size) {
+                const sizeValue = cell.querySelector('.size-value');
+                if (sizeValue) {
+                    sizeValue.textContent = response.size;
+                    cell.classList.add('loaded');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching directory size:', error);
+            const sizeValue = cell.querySelector('.size-value');
+            if (sizeValue) {
+                sizeValue.textContent = 'Error';
+            }
+        } finally {
+            running--;
+            processQueue();
+        }
+    }
+
+    // 观察元素可见性
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const cell = entry.target;
+                if (cell.dataset.type === 'directory' && !cell.classList.contains('loaded')) {
+                    queue.push(cell);
+                    processQueue();
+                }
+                observer.unobserve(cell);
+            }
+        });
+    });
+
+    // 开始观察所有目录的size单元格
+    document.querySelectorAll('.size[data-type="directory"]').forEach(cell => {
+        observer.observe(cell);
+    });
+
+    // 监听表格大小变化，控制部分元素的显隐
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const {
+                target
+            } = entry
+            const {
+                width
+            } = target.getBoundingClientRect()
+
+            if (width > 842) showEls('update_time')
+            else {
+                hideEls('update_time')
+
+                if (width > 490) {
+                    showEls('size')
+                    document.documentElement.style.setProperty(`--padding`, '12px 16px');
+                } else {
+                    hideEls('size')
+                    document.documentElement.style.setProperty(`--padding`, '8px 12px');
+                }
+            }
+        }
+    })
+    resizeObserver.observe(document.querySelector('table'))
+
+    // 隐藏元素
+    const hideEls = (className) => {
+        if (set.has(className)) return;
+
+        set.add(className)
+        const els = document.querySelectorAll(`.${className}`)
+        els.forEach(el => el.classList.add('hide'))
+    }
+
+    // 显示元素
+    const showEls = (className) => {
+        if (set.has(className)) {
+            set.delete(className)
+
+            const els = document.querySelectorAll(`.${className}`)
+            els.forEach(el => el.classList.remove('hide'))
+        }
+    }
+
+    const previewTitle = document.getElementById('preview-title');
+    const previewContent = document.getElementById('preview-content');
+
+    // 显示预览
+    async function showPreview(path, fileName, mimeType) {
+        previewTitle.textContent = fileName;
+        previewContent.innerHTML = '加载中...';
+
+        try {
+            // 图片预览
+            if (mimeType.startsWith('image/')) {
+                previewContent.className = 'content image-preview';
+                previewContent.innerHTML = `<img src="${path}" alt="${fileName}">`;
+            }
+            // PDF预览
+            else if (mimeType === 'application/pdf') {
+                previewContent.className = 'content pdf-preview';
+                previewContent.innerHTML = `<iframe src="${path}"></iframe>`;
+            }
+            // HTML预览
+            else if (mimeType === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+                previewContent.className = 'content html-preview';
+                previewContent.innerHTML = `<iframe src="${path}" sandbox="allow-same-origin allow-scripts"></iframe>`;
+            }
+            // SVG预览
+            else if (mimeType === 'image/svg+xml' || fileName.endsWith('.svg')) {
+                previewContent.className = 'content image-preview';
+                previewContent.innerHTML = `<img src="${path}" alt="${fileName}">`;
+            }
+            // 常见文本文件预览
+            else if (
+                mimeType.startsWith('text/') ||
+                fileName.match(/\.(txt|md|json|xml|css|js|ts|jsx|tsx|yml|yaml|ini|conf|log)$/i)
+            ) {
+                previewContent.className = 'content';
+                const response = await fetch(path);
+                if (!response.ok) throw new Error('Failed to load file');
+                const text = await response.text();
+
+                // 根据文件扩展名确定语言
+                const ext = fileName.split('.').pop().toLowerCase();
+                const languageMap = {
+                    // 编程语言
+                    'js': 'javascript',
+                    'jsx': 'javascript',
+                    'ts': 'typescript',
+                    'tsx': 'typescript',
+                    'py': 'python',
+                    'java': 'java',
+                    'c': 'cpp',
+                    'cpp': 'cpp',
+                    'h': 'cpp',
+                    'hpp': 'cpp',
+                    'cs': 'csharp',
+                    'go': 'go',
+                    'rs': 'rust',
+                    'sql': 'sql',
+                    'sh': 'shell',
+                    'bash': 'shell',
+                    'zsh': 'shell',
+
+                    // 标记和样式语言
+                    'html': 'html',
+                    'htm': 'html',
+                    'xml': 'xml',
+                    'css': 'css',
+                    'scss': 'scss',
+                    'sass': 'scss',
+                    'less': 'less',
+
+                    // 配置文件
+                    'json': 'json',
+                    'yml': 'yaml',
+                    'yaml': 'yaml',
+                    'ini': 'ini',
+                    'conf': 'ini',
+                    'config': 'ini',
+                    'dockerfile': 'dockerfile',
+                    'nginx.conf': 'nginx',
+                    'nginx': 'nginx',
+
+                    // 文档
+                    'md': 'markdown',
+                    'markdown': 'markdown',
+
+                    // 其他常见文件
+                    'log': 'plaintext',
+                    'txt': 'plaintext'
+                };
+
+                const language = languageMap[ext] || '';
+                const codeElement = `<pre><code class="language-${language}">${escapeHtml(text)}</code></pre>`;
+                previewContent.innerHTML = codeElement;
+
+                // 应用高亮
+                hljs.highlightElement(previewContent.querySelector('code'));
+            }
+            // 视频预览
+            else if (mimeType.startsWith('video/')) {
+                previewContent.className = 'content video-preview';
+                previewContent.innerHTML = `
+            <video controls>
+              <source src="${path}" type="${mimeType}">
+              Your browser does not support the video tag.
+            </video>`;
+            }
+            // 音频预览
+            else if (mimeType.startsWith('audio/')) {
+                previewContent.className = 'content audio-preview';
+                previewContent.innerHTML = `
+            <audio controls>
+              <source src="${path}" type="${mimeType}">
+              Your browser does not support the audio tag.
+            </audio>`;
+            } else {
+                previewContent.innerHTML = '不支持预览此类型的文件';
+            }
+        } catch (error) {
+            console.error('Preview error:', error);
+            previewContent.innerHTML = '加载失败';
+        }
+
+        dialog.showModal();
+    }
+
+    // HTML转义函数
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+</body>
+
+</html>
