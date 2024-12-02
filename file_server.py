@@ -203,29 +203,24 @@ def serve_file(file_path):
 if __name__ == '__main__':
     # 创建命令行参数解析器
     parser = argparse.ArgumentParser(description='File Server with custom root directory')
-    parser.add_argument('--dir', '-d', type=str, default=os.path.dirname(__file__),
-                      help='Root directory for the file server (default: current directory)')
-    parser.add_argument('--host', type=str, default='127.0.0.1',
-                      help='Host to bind the server to (default: 127.0.0.1)')
-    parser.add_argument('--port', type=int, default=5000,
-                      help='Port to run the server on (default: 5000)')
+    parser.add_argument('--dir', '-d', type=str, default=os.getcwd(),
+                      help='Root directory to serve (default: current working directory)')
     
     args = parser.parse_args()
     
-    # 设置根目录
+    # 确保路径是绝对路径
     ROOT_DIR = os.path.abspath(args.dir)
-    if not os.path.exists(ROOT_DIR):
-        print(f"Error: Root directory '{ROOT_DIR}' does not exist")
-        sys.exit(1)
-    if not os.path.isdir(ROOT_DIR):
-        print(f"Error: '{ROOT_DIR}' is not a directory")
-        sys.exit(1)
-        
-    # 禁用 Werkzeug 警告日志
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
-    print(f"File Server started at http://{args.host}:{args.port}")
+    if not os.path.exists(ROOT_DIR):
+        print(f"Error: Directory '{ROOT_DIR}' does not exist!")
+        sys.exit(1)
+    
+    if not os.path.isdir(ROOT_DIR):
+        print(f"Error: '{ROOT_DIR}' is not a directory!")
+        sys.exit(1)
+    
+    print(f"File Server started at http://127.0.0.1:5000")
     print(f"Serving files from: {ROOT_DIR}")
     
     # 启动服务器
-    app.run(host=args.host, port=args.port)
+    app.run(host='127.0.0.1', port=5000, debug=False)

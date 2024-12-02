@@ -14,4 +14,8 @@ if not exist "venv" (
 
 :: 启动服务器
 echo Starting server...
-python file_server.py
+if "%~1"=="" (
+    python file_server.py
+) else (
+    python file_server.py --dir "%~1"
+)
