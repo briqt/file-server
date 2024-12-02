@@ -200,7 +200,7 @@
             height: auto;
         }
 
-        #preview-content pre {
+        #preview-content.pre {
             white-space: pre-wrap;
             word-wrap: break-word;
             background: #f5f5f5;
@@ -214,6 +214,12 @@
             justify-content: center;
             align-items: center;
             padding: 0;
+        }
+
+        #preview-content.image-preview img {
+            width: 100%;
+            height: calc(90vh - 80px);
+            object-fit: contain;
         }
 
         #preview-content.pdf-preview {
