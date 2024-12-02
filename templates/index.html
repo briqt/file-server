@@ -314,6 +314,34 @@
         .breadcrumb-separator {
             margin: 0 10px;
         }
+
+        .size-loading {
+            display: none;
+        }
+
+        .loading .size-value {
+            display: none;
+        }
+
+        .loading .size-loading {
+            display: inline;
+            color: var(--loading-color);
+        }
+
+        .loading .size-loading::after {
+            content: "...";
+            display: inline-block;
+            animation: dots 1.5s infinite steps(4, end);
+            min-width: 1.5em;
+            text-align: left;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ""; }
+            40% { content: "."; }
+            60% { content: ".."; }
+            80%, 100% { content: "..."; }
+        }
     </style>
     <script>
         // 可预览的文件类型配置
@@ -473,19 +501,19 @@
     const set = new Set([]);
 
     // 限制并发请求数量
-    const CONCURRENT_LIMIT = 3;
+    const CONCURRENT_LIMIT = 16;
     const queue = [];
     let running = 0;
 
     // 处理队列中的请求
     function processQueue() {
-        if (running >= CONCURRENT_LIMIT || queue.length === 0) return;
-
-        const cell = queue.shift();
-        if (!cell) return;
-
-        running++;
-        fetchDirectorySize(cell);
+        while (running < CONCURRENT_LIMIT && queue.length > 0) {
+            const cell = queue.shift();
+            if (!cell || cell.classList.contains('loaded') || cell.classList.contains('loading')) continue;
+            
+            running++;
+            fetchDirectorySize(cell);
+        }
     }
 
     // 带重试的fetch
@@ -504,9 +532,10 @@
 
     // 获取目录大小
     async function fetchDirectorySize(cell) {
-        if (cell.classList.contains('loaded')) return;
+        if (cell.classList.contains('loaded') || cell.classList.contains('loading')) return;
 
         try {
+            cell.classList.add('loading');
             const path = cell.dataset.path;
             // 移除开头的斜杠，确保路径格式正确
             const cleanPath = path.replace(/^\/+/, '');
@@ -524,8 +553,10 @@
             const sizeValue = cell.querySelector('.size-value');
             if (sizeValue) {
                 sizeValue.textContent = 'Error';
+                cell.classList.add('loaded'); // 防止重复请求错误的项
             }
         } finally {
+            cell.classList.remove('loading');
             running--;
             processQueue();
         }
@@ -536,9 +567,15 @@
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const cell = entry.target;
-                if (cell.dataset.type === 'directory' && !cell.classList.contains('loaded')) {
-                    queue.push(cell);
-                    processQueue();
+                if (cell.dataset.type === 'directory' && 
+                    !cell.classList.contains('loaded') && 
+                    !cell.classList.contains('loading')) {
+                    
+                    // 检查队列中是否已存在
+                    if (!queue.includes(cell)) {
+                        queue.push(cell);
+                        processQueue();
+                    }
                 }
                 observer.unobserve(cell);
             }

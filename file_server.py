@@ -50,21 +50,34 @@ def normalize_path(path):
     """规范化路径，确保使用/作为分隔符且以/开头"""
     # 将Windows路径分隔符替换为/
     normalized = path.replace(os.sep, '/')
-    # 确保路径以/开头
-    if not normalized.startswith('/'):
-        normalized = '/' + normalized
+    # 去除开头的斜杠
+    normalized = normalized.lstrip('/')
     return normalized
+
+def get_safe_path(path):
+    """获取安全的绝对路径，确保在ROOT_DIR范围内"""
+    # 规范化并移除开头的斜杠
+    clean_path = normalize_path(path)
+    # 构建绝对路径
+    abs_path = os.path.abspath(os.path.join(ROOT_DIR, clean_path))
+    # 确保路径在ROOT_DIR内
+    if not abs_path.startswith(ROOT_DIR):
+        return None
+    return abs_path
 
 @lru_cache(maxsize=100)
 def get_directory_size(path):
     """递归计算目录大小（带缓存）"""
     total_size = 0
     try:
-        for dirpath, dirnames, filenames in os.walk(path):
-            for filename in filenames:
-                file_path = os.path.join(dirpath, filename)
+        # 使用os.scandir代替os.walk来提高性能
+        with os.scandir(path) as entries:
+            for entry in entries:
                 try:
-                    total_size += os.path.getsize(file_path)
+                    if entry.is_file(follow_symlinks=False):
+                        total_size += entry.stat().st_size
+                    elif entry.is_dir(follow_symlinks=False):
+                        total_size += get_directory_size(entry.path)
                 except (OSError, IOError):
                     continue
     except Exception as e:
@@ -121,12 +134,10 @@ def get_breadcrumbs(target_path, base_dir):
 def get_dir_size(dir_path):
     """异步获取目录大小的API"""
     try:
-        # 使用全局根目录
-        target_path = os.path.abspath(os.path.join(ROOT_DIR, dir_path.strip('/')))
-        
-        # 安全检查：确保目标路径是根目录的子目录
-        if not target_path.startswith(ROOT_DIR):
-            logging.warning(f"Attempted to access directory outside root: {target_path}")
+        # 获取安全的目标路径
+        target_path = get_safe_path(dir_path)
+        if target_path is None:
+            logging.warning(f"Attempted to access directory outside root: {dir_path}")
             abort(403)
             
         # 检查路径是否存在且是目录
@@ -153,10 +164,9 @@ def get_dir_size(dir_path):
 def serve_file(file_path):
     """统一的文件服务处理函数"""
     try:
-        target_path = os.path.abspath(os.path.join(ROOT_DIR, file_path))
-
-        # 安全检查：确保目标路径在根目录下
-        if not target_path.startswith(ROOT_DIR):
+        # 获取安全的目标路径
+        target_path = get_safe_path(file_path)
+        if target_path is None:
             abort(403)
 
         if not os.path.exists(target_path):
@@ -224,4 +234,7 @@ if __name__ == '__main__':
     
     # 使用 waitress 作为生产级服务器
     from waitress import serve
-    serve(app, host='127.0.0.1', port=5000)
+    serve(app, host='127.0.0.1', port=5000,
+          threads=16,  # 增加线程数
+          channel_timeout=300,  # 增加超时时间
+          ident='FileServer')  # 设置服务器标识
