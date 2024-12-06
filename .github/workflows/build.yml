@@ -59,6 +59,17 @@ jobs:
       with:
         fetch-depth: 0
     
+    - name: Cache PDM dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          .venv
+          ~/.cache/pdm
+          ~/.cache/pip
+        key: ${{ runner.os }}-pdm-${{ hashFiles('pdm.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pdm-
+
     - name: Set up QEMU
       if: runner.os == 'Linux'
       uses: docker/setup-qemu-action@v2
@@ -69,17 +80,6 @@ jobs:
         python-version: '3.11'
         architecture: ${{ matrix.python_arch || 'x64' }}
         cache: 'pip'
-        
-    - name: Cache PDM dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          .venv
-          ~/.cache/pdm
-          ~/.cache/pip
-        key: ${{ runner.os }}-pdm-${{ hashFiles('**/pdm.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pdm-
         
     - name: Install PDM
       uses: pdm-project/setup-pdm@v3
