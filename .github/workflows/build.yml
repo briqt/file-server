@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+# 添加权限配置
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build ${{ matrix.os }}-${{ matrix.arch }}
@@ -131,5 +135,8 @@ jobs:
       with:
         files: dist/${{ matrix.output_name }}
         name: ${{ matrix.asset_name }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
