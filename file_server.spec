@@ -8,7 +8,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('templates', 'templates'),
-        ('static', 'static')
+        ('static', 'static'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -20,7 +20,6 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
-
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -30,7 +29,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='FileServer',
+    name='file-server',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

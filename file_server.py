@@ -243,4 +243,4 @@ if __name__ == '__main__':
     serve(app, host='0.0.0.0', port=5000,
           threads=16,  # 增加线程数
           channel_timeout=300,  # 增加超时时间
-          ident='FileServer')  # 设置服务器标识
+          ident='file-server')  # 修改服务器标识
