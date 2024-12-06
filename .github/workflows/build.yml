@@ -120,7 +120,9 @@ jobs:
           pdm config python.use_venv false
           pdm install
           pdm run pyinstaller file_server.spec
-
+          chmod -R 755 dist/
+          mv "dist/${{ matrix.output_name }}" "dist/${{ matrix.asset_name }}"
+            
     - name: Build executable (Linux AMD64)
       if: runner.os == 'Linux' && matrix.arch == 'amd64'
       uses: nick-fields/retry@v2
@@ -133,16 +135,6 @@ jobs:
       run: |
         echo "Listing dist directory contents:"
         ls -la dist/
-      shell: bash
-
-    - name: Set file permissions
-      run: |
-        chmod -R 755 dist/
-      shell: bash
-
-    - name: Rename release asset
-      run: |
-        mv "dist/${{ matrix.output_name }}" "dist/${{ matrix.asset_name }}"
       shell: bash
 
     - name: Upload Release Asset
