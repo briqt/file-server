@@ -4,17 +4,19 @@ version = "1.0.0"
 description = "A simple file server built with Flask"
 authors = []
 dependencies = [
-    "flask==2.0.0",
-    "werkzeug==2.0.0",
-    "waitress==2.1.2",
-    "pyinstaller==6.11.0",
+    "flask>=2.3.0",
+    "werkzeug>=2.3.0",
+    "waitress>=2.1.2",
+    "pyinstaller>=6.11.0",
 ]
 requires-python = "<3.14,>=3.8"
 
 [project.optional-dependencies]
 dev = [
-    "black==23.7.0",
-    "flake8==6.1.0",
+    "black>=23.7.0",
+    "flake8>=6.1.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
 ]
 
 [build-system]
@@ -26,4 +28,5 @@ dev = "python file_server.py"  # 开发环境运行
 start = "python file_server.py"  # 生产环境运行
 lint = "flake8 ."  # 代码检查
 format = "black ."  # 代码格式化
+test = "pytest"  # 运行测试
 build = "pyinstaller FileServer.spec"  # 构建可执行文件
