@@ -135,6 +135,11 @@ jobs:
         ls -la dist/
       shell: bash
 
+    - name: Set file permissions
+      run: |
+        chmod -R 755 dist/
+      shell: bash
+
     - name: Rename release asset
       run: |
         mv "dist/${{ matrix.output_name }}" "dist/${{ matrix.asset_name }}"
