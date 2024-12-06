@@ -240,7 +240,7 @@ if __name__ == '__main__':
     
     # 使用 waitress 作为生产级服务器
     from waitress import serve
-    serve(app, host='127.0.0.1', port=5000,
+    serve(app, host='0.0.0.0', port=5000,
           threads=16,  # 增加线程数
           channel_timeout=300,  # 增加超时时间
           ident='FileServer')  # 设置服务器标识

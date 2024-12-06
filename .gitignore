@@ -1,5 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
 /build/
 /dist/
-/.idea/
+*.egg-info/
+*.egg
+
+# Virtual environments
+/.venv/
 /venv/
 /venv-build/
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# PDM
+.pdm-python
+.pdm.toml
+__pypackages__/
+/.pdm-build/
+/.pdm-python
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project specific
+*.log
+*.db
+*.sqlite3

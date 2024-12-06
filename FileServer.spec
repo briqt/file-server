@@ -10,7 +10,7 @@ a = Analysis(
         ('templates', 'templates'),
         ('static', 'static')
     ],
-    hiddenimports=['flask', 'jinja2', 'werkzeug', 'waitress'],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -20,6 +20,7 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
