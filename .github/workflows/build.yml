@@ -90,7 +90,7 @@ jobs:
       with:
         timeout_minutes: 10
         max_attempts: 3
-        command: pdm install
+        command: pdm install --dev
         
     - name: Run Tests
       if: runner.os != 'Linux' || matrix.arch == 'amd64'
@@ -118,7 +118,7 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install pdm
           pdm config python.use_venv false
-          pdm install
+          pdm install --dev
           pdm run pyinstaller --onefile --name ${{ matrix.output_name }} file_server.py
 
     - name: Build executable (Linux AMD64)
