@@ -17,48 +17,38 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Windows builds
+          # Windows build
           - os: windows-latest
             platform: windows
             arch: amd64
             output_name: file-server.exe
             asset_name: file-server-${{ github.ref_name }}-windows-amd64.exe
-          - os: windows-latest
-            platform: windows
-            arch: 386
-            output_name: file-server.exe
-            asset_name: file-server-${{ github.ref_name }}-windows-386.exe
-            python_arch: x86
             
-          # Linux builds
+          # Linux build
           - os: ubuntu-latest
             platform: linux
             arch: amd64
             output_name: file-server
             asset_name: file-server-${{ github.ref_name }}-linux-amd64
-          - os: ubuntu-latest
-            platform: linux
-            arch: arm64
-            output_name: file-server
-            asset_name: file-server-${{ github.ref_name }}-linux-arm64
-            
-          # macOS builds
+
+          # macOS build
           - os: macos-latest
             platform: darwin
             arch: amd64
             output_name: file-server
             asset_name: file-server-${{ github.ref_name }}-darwin-amd64
-          - os: macos-latest
-            platform: darwin
-            arch: arm64
-            output_name: file-server
-            asset_name: file-server-${{ github.ref_name }}-darwin-arm64
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
     
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
     - name: Cache PDM dependencies
       uses: actions/cache@v3
       with:
@@ -69,30 +59,18 @@ jobs:
         key: ${{ runner.os }}-pdm-${{ hashFiles('pdm.lock') }}
         restore-keys: |
           ${{ runner.os }}-pdm-
-
-    - name: Set up QEMU
-      if: runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v2
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        architecture: ${{ matrix.python_arch || 'x64' }}
-        cache: 'pip'
         
     - name: Install PDM
       uses: pdm-project/setup-pdm@v3
       with:
         python-version: '3.11'
-        architecture: ${{ matrix.python_arch || 'x64' }}
         version: 2.11.0
         enable-pep582: true
-        
+
     - name: Install dependencies
       uses: nick-fields/retry@v2
       with:
-        timeout_minutes: 10
+        timeout_minutes: 15
         max_attempts: 3
         command: pdm install
         
@@ -100,49 +78,49 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
+          # Clean dist directory
+          rm -rf dist/* || true
+          mkdir -p dist
+            
+          # Build
           pdm install
           pdm run pyinstaller file_server.spec --clean
+            
+          # Verify and rename
           ls -la dist/
           if [ -f "dist/file-server.exe" ]; then
+            chmod +x "dist/file-server.exe"
             mv "dist/file-server.exe" "dist/${{ matrix.asset_name }}"
             echo "✓ Successfully built and renamed executable to ${{ matrix.asset_name }}"
+            ls -la "dist/${{ matrix.asset_name }}"
           else
             echo "❌ Failed to find dist/file-server.exe"
             exit 1
           fi
 
-    - name: Build executable (Linux ARM64)
-      if: runner.os == 'Linux' && matrix.arch == 'arm64'
-      uses: uraimo/run-on-arch-action@v2
-      with:
-        arch: aarch64
-        distro: ubuntu20.04
-        githubToken: ${{ github.token }}
-        install: |
-          apt-get update
-          apt-get install -y python3-pip python3-venv
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install pdm
-          pdm config python.use_venv false
-          pdm install
-          pdm run pyinstaller file_server.spec
-          chmod -R 755 dist/
-          mv "dist/${{ matrix.output_name }}" "dist/${{ matrix.asset_name }}"
-            
-    - name: Build executable (Linux AMD64)
-      if: runner.os == 'Linux' && matrix.arch == 'amd64'
+    - name: Build executable (Unix-like)
+      if: runner.os == 'Linux' || runner.os == 'macOS'
       uses: nick-fields/retry@v2
       with:
         timeout_minutes: 15
         max_attempts: 3
         command: |
+          # Clean dist directory
+          rm -rf dist/* || true
+          mkdir -p dist
+            
+          # Build
           pdm install
           pdm run pyinstaller file_server.spec --clean
+            
+          # Verify and set permissions
           ls -la dist/
           if [ -f "dist/file-server" ]; then
+            chmod +x "dist/file-server"
             mv "dist/file-server" "dist/${{ matrix.asset_name }}"
+            chmod 755 "dist/${{ matrix.asset_name }}"
             echo "✓ Successfully built and renamed executable to ${{ matrix.asset_name }}"
+            ls -la "dist/${{ matrix.asset_name }}"
           else
             echo "❌ Failed to find dist/file-server"
             exit 1
@@ -150,8 +128,15 @@ jobs:
 
     - name: List dist directory
       run: |
-        echo "Listing dist directory contents:"
+        echo "=== Final dist directory contents ==="
         ls -la dist/
+        echo "=== File details ==="
+        if [ -f "dist/${{ matrix.asset_name }}" ]; then
+          ls -la "dist/${{ matrix.asset_name }}"
+        else
+          echo "❌ Asset file not found!"
+          exit 1
+        fi
       shell: bash
 
     - name: Upload Release Asset
